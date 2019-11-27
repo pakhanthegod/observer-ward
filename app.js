@@ -1,58 +1,67 @@
-const TelegramBot = require('node-telegram-bot-api');
+const Telegraf = require('telegraf');
 const dotenv = require('dotenv');
+const winston = require('winston');
 
 
 dotenv.config();
 const token = process.env.BOT_TOKEN;
-const bot = new TelegramBot(token, {polling: true});
+const bot = new Telegraf(token)
+const logger = winston.createLogger({
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json(),
+  ),
+  transports: [
+    new winston.transports.Console()
+  ]
+})
 
 
-bot.onText(/\/echo (.+)/, (msg, match) => {
-  const chatId = msg.chat.id;
-  const resp = match[1];
-
-});
-
-bot.on('new_chat_members', (msg) => {
+bot.on('new_chat_members', (ctx) => {
   const options = {
-    reply_to_messages_id: msg.message_id,
+    parse_mode: 'markdown',
+    reply_to_messages_id: ctx.message_id,
     reply_markup: {
       inline_keyboard: [
         [
           {
             text: "I'm not a bot",
-            callback_data: `notbot_${msg.from.id}`
+            callback_data: `notbot_${ctx.from.id}`
           }
         ]
       ]
     }
   }
-  reply = bot.sendMessage(msg.chat.id, 'Confirm that you are not a bot', options);
+  reply = ctx.telegram.sendMessage(ctx.chat.id, `Hello **${ctx.from.first_name}**, confirm please that you aren't a bot`, options);
   reply.then(data => {
     setTimeout(data => {
-      bot.deleteMessage(data.chat.id, data.message_id)
-        .then(deletion_data => {
-          bot.kickChatMember(msg.chat.id, msg.from.id)
-            .then(data => {
-              bot.unbanChatMember(msg.chat.id, msg.from.id);
+      ctx.telegram.deleteMessage(data.chat.id, data.message_id)
+        .then(() => {
+          ctx.telegram.kickChatMember(ctx.chat.id, ctx.from.id)
+            .then(() => {
+              logger.info(`Chat member ${ctx.from.first_name} doesn't verified.`)
+              ctx.telegram.unbanChatMember(ctx.chat.id, ctx.from.id);
             })
-            .catch(err => {
+            .catch(() => {
+              logger.error(`Can't unban chat member ${ctx.from.first_name}`);
             });
         })
-        .catch(err => {
+        .catch(() => {
+          logger.info(`Chat member ${ctx.from.first_name} verified`)
         });
     }, 15000, data);
   });
 });
 
-bot.on('callback_query', (callbackQuery) => {
-  const action = callbackQuery.data;
-  const msg = callbackQuery.message;
+bot.on('callback_query', (ctx) => {
+  const action = ctx.callbackQuery.data;
+  const msg = ctx.callbackQuery.message;
   if (action.includes('notbot')) {
     res = action.split('_');
-    if (res[1] == callbackQuery.from.id) {
-      bot.deleteMessage(msg.chat.id, msg.message_id);
+    if (res[1] == ctx.callbackQuery.from.id) {
+      ctx.telegram.deleteMessage(msg.chat.id, msg.message_id);
     }
   }
 });
 
+bot.startPolling()
