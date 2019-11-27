@@ -1,0 +1,8 @@
+version: '3.3'
+services:
+  web:
+    build: .
+    container_name: 'observer_ward'
+    volumes:
+      - ./:/app
+
