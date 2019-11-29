@@ -10,7 +10,13 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^8.2.0",
+    "mongodb": "^3.3.5",
     "telegraf": "^3.33.3",
     "winston": "^3.2.1"
+  },
+  "devDependencies": {
+    "eslint": "^6.7.1",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.18.2"
   }
 }

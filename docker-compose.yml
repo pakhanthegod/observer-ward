@@ -4,5 +4,21 @@ services:
     build: .
     container_name: 'observer_ward'
     volumes:
-      - ./:/app
-
+      - ./app/:/app/
+      - /app/node_modules
+    links:
+      - db
+  db:
+    image: mongo:4-bionic
+    container_name: 'observer_ward_mongo'
+    env_file:
+      - .env
+    environment:
+      - MONGO_INITDB_DATABASE=${MONGO_DATABASE}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+    volumes:
+      - ./mongo-volume:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    expose:
+      - 27017

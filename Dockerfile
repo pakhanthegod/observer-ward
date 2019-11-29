@@ -1,6 +1,6 @@
 FROM node:12-slim
 
-COPY . /app
+COPY package.json package-lock.json /app/
 
 WORKDIR /app
 
